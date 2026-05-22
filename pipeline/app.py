@@ -28,7 +28,7 @@ def health():
         "ai_enabled": bool(GEMINI_KEY),
     })
 
-@app.route("/api/test-ai", methods=["GET"])
+@app.route("/test-ai", methods=["GET"])
 def test_ai():
     """Test both AI connections."""
     results = {}
@@ -54,7 +54,7 @@ def test_ai():
 
     return jsonify(results)
 
-@app.route("/api/convert", methods=["POST"])
+@app.route("/convert", methods=["POST"])
 def convert_pdf():
     """Full pipeline: PDF -> accessible EPUB3 + JSON."""
     if "file" not in request.files:
@@ -89,7 +89,7 @@ def convert_pdf():
             "minimax_used": bool(MINIMAX_KEY),
         })
 
-@app.route("/api/demo-data", methods=["GET"])
+@app.route("/demo-data", methods=["GET"])
 def demo_data():
     """Return demo data for the reader."""
     json_path = DEMO_DIR / "latest_output.json"
@@ -100,7 +100,7 @@ def demo_data():
     with open(json_path, encoding="utf-8") as f:
         return jsonify(json.load(f))
 
-@app.route("/api/download/epub", methods=["GET"])
+@app.route("/download/epub", methods=["GET"])
 def download_epub():
     epub_path = DEMO_DIR / "latest_output.epub"
     if not epub_path.exists():
