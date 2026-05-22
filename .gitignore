@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+venv/
+.venv/
+demo/latest_output.*
+*.egg-info/
+.DS_Store
+*.epub
+dist/
+build/
+.pytest_cache/
+node_modules/

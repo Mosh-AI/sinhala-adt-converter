@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sinhala ADT Reader — Accessible Textbook Reader</title>
+  <meta name="description" content="Accessible Sinhala textbook reader with TTS, keyboard navigation, high contrast mode, and adjustable typography.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Sinhala:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/reader.css">
+</head>
+<body class="font-md">
+  <!-- Skip link -->
+  <a href="#content" class="skip-link">Skip to content</a>
+
+  <!-- Loading overlay -->
+  <div id="loading" class="loading-overlay" role="status" aria-live="polite" aria-label="Loading textbook content">
+    <div class="loading-spinner" aria-hidden="true"></div>
+    <p>Loading textbook...</p>
+  </div>
+
+  <!-- Controls Bar (sticky) -->
+  <header class="controls-bar" role="banner">
+    <div class="controls-inner">
+      <div class="controls-left">
+        <a href="index.html" class="ctrl-btn ctrl-home" aria-label="Back to homepage">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M3 12L12 3l9 9M5 10v10a1 1 0 001 1h5v-6h4v6h5a1 1 0 001-1V10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="ctrl-label">Home</span>
+        </a>
+        <button id="sidebar-toggle" class="ctrl-btn" aria-label="Toggle chapter list" aria-expanded="false" aria-controls="sidebar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="ctrl-label">Chapters</span>
+        </button>
+      </div>
+
+      <div class="controls-center">
+        <button id="play-btn" class="ctrl-btn ctrl-play" aria-label="Read chapter aloud" aria-pressed="false">
+          <svg class="icon-play" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <polygon points="5,3 19,12 5,21" fill="currentColor"/>
+          </svg>
+          <svg class="icon-pause" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="display:none">
+            <rect x="6" y="4" width="4" height="16" fill="currentColor"/>
+            <rect x="14" y="4" width="4" height="16" fill="currentColor"/>
+          </svg>
+          <span class="play-label">Read aloud</span>
+        </button>
+
+        <label for="speed-select" class="sr-only">Reading speed</label>
+        <select id="speed-select" class="ctrl-select" aria-label="Reading speed">
+          <option value="0.5">0.5x</option>
+          <option value="0.75">0.75x</option>
+          <option value="1" selected>1x</option>
+          <option value="1.25">1.25x</option>
+          <option value="1.5">1.5x</option>
+          <option value="2">2x</option>
+        </select>
+      </div>
+
+      <div class="controls-right">
+        <div class="font-controls" role="group" aria-label="Font size">
+          <button class="ctrl-btn font-btn" data-size="sm" aria-label="Small font size" title="Small">S</button>
+          <button class="ctrl-btn font-btn active" data-size="md" aria-label="Medium font size" title="Medium" aria-pressed="true">M</button>
+          <button class="ctrl-btn font-btn" data-size="lg" aria-label="Large font size" title="Large">L</button>
+          <button class="ctrl-btn font-btn" data-size="xl" aria-label="Extra large font size" title="Extra large">XL</button>
+        </div>
+        <button id="contrast-btn" class="ctrl-btn" aria-label="Toggle high contrast mode" aria-pressed="false" title="High contrast">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+            <path d="M12 2v20" stroke="currentColor" stroke-width="2"/>
+            <path d="M12 2a10 10 0 010 20" fill="currentColor"/>
+          </svg>
+        </button>
+        <button id="download-btn" class="ctrl-btn" aria-label="Download EPUB" title="Download EPUB">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button id="help-btn" class="ctrl-btn" aria-label="Keyboard shortcuts" aria-expanded="false" aria-controls="shortcuts-panel" title="Keyboard shortcuts">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+            <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="progress-track" role="progressbar" aria-label="Reading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="33">
+      <div id="progress-bar" class="progress-fill" style="width: 33%"></div>
+    </div>
+    <!-- TTS status -->
+    <div id="tts-status" class="tts-status" aria-live="polite" aria-atomic="true"></div>
+  </header>
+
+  <!-- Keyboard shortcuts panel -->
+  <div id="shortcuts-panel" class="shortcuts-panel" role="dialog" aria-labelledby="shortcuts-heading" aria-modal="true" hidden>
+    <div class="shortcuts-content">
+      <div class="shortcuts-header">
+        <h2 id="shortcuts-heading">Keyboard Shortcuts</h2>
+        <button id="close-shortcuts" class="close-btn" aria-label="Close shortcuts panel">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+      <dl class="shortcuts-list">
+        <div class="shortcut-item">
+          <dt><kbd>Space</kbd></dt>
+          <dd>Play / Pause TTS</dd>
+        </div>
+        <div class="shortcut-item">
+          <dt><kbd>&#8594;</kbd></dt>
+          <dd>Next chapter</dd>
+        </div>
+        <div class="shortcut-item">
+          <dt><kbd>&#8592;</kbd></dt>
+          <dd>Previous chapter</dd>
+        </div>
+        <div class="shortcut-item">
+          <dt><kbd>+</kbd></dt>
+          <dd>Increase font size</dd>
+        </div>
+        <div class="shortcut-item">
+          <dt><kbd>-</kbd></dt>
+          <dd>Decrease font size</dd>
+        </div>
+        <div class="shortcut-item">
+          <dt><kbd>C</kbd></dt>
+          <dd>Toggle high contrast</dd>
+        </div>
+        <div class="shortcut-item">
+          <dt><kbd>?</kbd></dt>
+          <dd>Show this panel</dd>
+        </div>
+        <div class="shortcut-item">
+          <dt><kbd>Esc</kbd></dt>
+          <dd>Close panel</dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+
+  <!-- Layout -->
+  <div class="reader-layout">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar" role="complementary" aria-label="Chapter navigation">
+      <div class="sidebar-header">
+        <h2 class="sidebar-title">Contents</h2>
+        <span class="sidebar-count" id="total-chapters" aria-label="total chapters"></span>
+      </div>
+      <nav role="navigation" aria-label="Chapters">
+        <ul id="chapter-list" class="chapter-list" role="list"></ul>
+      </nav>
+      <div class="sidebar-progress">
+        <div class="sidebar-progress-label">
+          Chapter <span id="progress-text">1 of 3</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="reader-main" role="main">
+      <div class="reader-content-wrap">
+        <div class="chapter-nav-top">
+          <button id="prev-btn" class="nav-ch-btn" aria-label="Previous chapter" disabled>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Previous
+          </button>
+          <div class="chapter-breadcrumb" aria-live="polite">
+            <span id="chapter-title" aria-label="Current chapter"></span>
+          </div>
+          <button id="next-btn" class="nav-ch-btn" aria-label="Next chapter">
+            Next
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div id="content" class="chapter-content" lang="si" tabindex="-1" aria-live="polite" aria-atomic="true">
+          <!-- Chapter content rendered here -->
+        </div>
+
+        <div class="chapter-nav-bottom">
+          <button id="prev-btn-bottom" class="nav-ch-btn" aria-label="Previous chapter" disabled>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Previous chapter
+          </button>
+          <button id="next-btn-bottom" class="nav-ch-btn next" aria-label="Next chapter">
+            Next chapter
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/reader.js"></script>
+</body>
+</html>
