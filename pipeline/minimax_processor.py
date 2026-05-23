@@ -134,5 +134,5 @@ Rules:
 
     def test_connection(self) -> bool:
         """Test MiniMax API connection."""
-        result = self._call("Reply with exactly: MiniMax OK", 300)
+        result = self._call("Reply with exactly: MiniMax OK", 1024)
         return "MiniMax OK" in result if result else False
