@@ -40,12 +40,18 @@ class SinhalaReader {
   }
 
   getBuiltinData() {
+    // Sinhala fallback summaries — used only if /api/demo-data is unreachable
+    const summaries = {
+      1: "මෙම පාඩමේදී අපේ රටේ ලස්සන ස්වභාවය ගැන ඉගෙන ගනිමු. ශබ්ද හඳුනා ගන්නා ආකාරය ස්වභාවික උදාහරණ තුළින් දැනගනිමු.",
+      2: "මෙම පාඩමේදී සිංහල භාෂාවෙන් මූලික ගණිතය ඉගෙන ගනිමු. ඉලක්කම් සහ එකතු කිරීම් ගැන ප්‍රීතිමත්ව ඉගෙනිමු.",
+      3: "මෙම පාඩමේදී ළමයින් වර්ණ සහ කලාව ගැන ඉගෙන ගනිමු. චිත්‍ර ඇඳීමෙන් නිර්මාණශීලිත්වය වර්ධනය කරගනිමු.",
+    };
     return {
       title: "සිංහල භාෂා පාඩම් — 3 ශ්‍රේණිය",
       language: "si",
       publisher: "Ministry of Education Sri Lanka",
       ai_enhanced: true,
-      extraction_method: "gemini_vision_ocr",
+      extraction_method: "builtin_fallback",
       wcag_metadata: {
         conformsTo: "WCAG 2.1 Level AA",
         accessibilityFeature: ["alternativeText", "readingOrder", "structuralNavigation", "tableOfContents"],
@@ -55,23 +61,21 @@ class SinhalaReader {
         {
           number: 1,
           title: "පාඩම 1 — ශබ්ද හඳුනා ගනිමු",
-          summary: "Students learn to identify and pronounce Sinhala sounds through nature examples.",
+          summary: summaries[1],
           reading_time_minutes: 2,
           has_exercise: false,
           images: [],
           accessible_html: `<article lang="si" id="chapter-1" aria-labelledby="ch-1-heading" role="article">
-<a href="#ch-1-main" class="skip-link" tabindex="0">Skip to chapter content</a>
+<a href="#ch-1-main" class="skip-link" tabindex="0">පාඩම් අන්තර්ගතයට යන්න</a>
 <div id="ch-1-main">
 <section id="ch-1" role="region" aria-label="පාඩම 1 — ශබ්ද හඳුනා ගනිමු" lang="si">
 <h2 id="ch-1-heading" tabindex="0">පාඩම 1 — ශබ්ද හඳුනා ගනිමු</h2>
-<aside class="summary-box" role="note" aria-label="Chapter summary">
-  <strong>Summary:</strong> Students learn to identify and pronounce Sinhala sounds through nature examples.
+<aside class="summary-box" role="note" lang="si" aria-label="පාඩම් සාරාංශය">
+  <strong>සාරාංශය:</strong> ${summaries[1]}
 </aside>
-<p tabindex="0" lang="si">අපේ රටේ ලස්සන ස්වභාවය ගැන ඉගෙන ගනිමු. ගස් ගල් දිය ඇළ — ඒ සෑම දෙයක්ම ශබ්ද නිකුත් කරයි.</p>
+<p tabindex="0" lang="si">අපේ රටේ ලස්සන ස්වභාවය ගැන ඉගෙන ගනිමු. ගස් ගල් දිය ඇළ — ශබ්ද නිකුත් කරයි.</p>
 <p tabindex="0" lang="si">කුරුළු ගීය ඇසෙයි. ගඟ ගලා යයි. ළමයි සෙල්ලම් කරති. සතුටෙන් ගෙදර යති.</p>
 <p tabindex="0" lang="si">ශ්‍රී ලංකාව ලස්සන රටකි. එහි ළමයි දෙමාපියන් ආදරයෙන් ජීවත් වෙති.</p>
-<p tabindex="0" lang="si">ශ්‍රී ලංකාවේ ළමයි ඉතා දක්ෂයි. ඔවුන් ශාස්ත්‍ර, කලා, ක්‍රීඩා ක්ෂේත්‍රවල ඉහළ ඉලක්ක සාධිති.</p>
-<p tabindex="0" lang="si">අපේ ශ්‍රේෂ්ඨ සිංහල භාෂාව ඉගෙනිමෙන් ළමුන්ට ජාතික හැඟීම ශක්තිමත් කළ හැකිය.</p>
 </section>
 </div>
 </article>`
@@ -79,23 +83,21 @@ class SinhalaReader {
         {
           number: 2,
           title: "පාඩම 2 — ගණිතය ඉගෙනිමු",
-          summary: "Introduction to basic addition and numbers in Sinhala.",
+          summary: summaries[2],
           reading_time_minutes: 2,
           has_exercise: true,
           images: [],
           accessible_html: `<article lang="si" id="chapter-2" aria-labelledby="ch-2-heading" role="article">
-<a href="#ch-2-main" class="skip-link" tabindex="0">Skip to chapter content</a>
+<a href="#ch-2-main" class="skip-link" tabindex="0">පාඩම් අන්තර්ගතයට යන්න</a>
 <div id="ch-2-main">
 <section id="ch-2" role="region" aria-label="පාඩම 2 — ගණිතය ඉගෙනිමු" lang="si">
 <h2 id="ch-2-heading" tabindex="0">පාඩම 2 — ගණිතය ඉගෙනිමු</h2>
-<aside class="summary-box" role="note" aria-label="Chapter summary">
-  <strong>Summary:</strong> Introduction to basic addition and numbers in Sinhala.
+<aside class="summary-box" role="note" lang="si" aria-label="පාඩම් සාරාංශය">
+  <strong>සාරාංශය:</strong> ${summaries[2]}
 </aside>
 <p tabindex="0" lang="si">එකක් + එකක් = දෙකයි. දෙකක් + දෙකක් = හතරයි.</p>
 <p tabindex="0" lang="si">ගණිතය ඉගෙන ගැනීම ප්‍රීතිමත් කාර්යයකි. සංඛ්‍යා ගැන දැනගන්නෙමු.</p>
 <p tabindex="0" lang="si">1, 2, 3, 4, 5 — ඉලක්කම් ගණිත කරමු. ජීවිතයේ ගණිතය ඉතා වැදගත් වේ.</p>
-<p tabindex="0" lang="si">ගෙදර ඇති දේවල් ගෝලීය ගණිතය ඉගෙනීමට ශ්‍රේෂ්ඨ ශිල්ප ශාලාවක් ලෙස ත්‍රෛමාසිකව ගත හැකිය.</p>
-<p tabindex="0" lang="si">ළමා ගණිත ශ්‍රේෂ්ඨත්වය දළ දේශීය නිෂ්පාදිතය ඉහළ නැංවීමේ ජාතික ඉලක්කයට දායක වේ.</p>
 </section>
 </div>
 </article>`
@@ -103,23 +105,21 @@ class SinhalaReader {
         {
           number: 3,
           title: "පාඩම 3 — ලලිත කලා",
-          summary: "Children explore colors and art as a means of creative expression.",
+          summary: summaries[3],
           reading_time_minutes: 2,
           has_exercise: false,
           images: [],
           accessible_html: `<article lang="si" id="chapter-3" aria-labelledby="ch-3-heading" role="article">
-<a href="#ch-3-main" class="skip-link" tabindex="0">Skip to chapter content</a>
+<a href="#ch-3-main" class="skip-link" tabindex="0">පාඩම් අන්තර්ගතයට යන්න</a>
 <div id="ch-3-main">
 <section id="ch-3" role="region" aria-label="පාඩම 3 — ලලිත කලා" lang="si">
 <h2 id="ch-3-heading" tabindex="0">පාඩම 3 — ලලිත කලා</h2>
-<aside class="summary-box" role="note" aria-label="Chapter summary">
-  <strong>Summary:</strong> Children explore colors and art as a means of creative expression.
+<aside class="summary-box" role="note" lang="si" aria-label="පාඩම් සාරාංශය">
+  <strong>සාරාංශය:</strong> ${summaries[3]}
 </aside>
 <p tabindex="0" lang="si">චිත්‍ර ඇඳීම ලස්සන කලාවකි. පාට පාට රේඛා ඇඳ සිතුවමක් ගොඩ නඟමු.</p>
-<p tabindex="0" lang="si">නිල් පාට, රතු පාට, කහ පාට — ඒ සෑම පාටකම ලෝකය සරලයි.</p>
+<p tabindex="0" lang="si">නිල් පාට, රතු පාට, කහ පාට — ලෝකය සරලයි.</p>
 <p tabindex="0" lang="si">කලාව ළමයාගේ නිර්මාණශීලිත්වය වර්ධනය කරන හොඳ කුසලතාවකි.</p>
-<p tabindex="0" lang="si">නිර්මාණශීලි ළමා ශිල්ප ශාලා ශ්‍රී ලංකාවේ සෑම ප්‍රාදේශීය ලේකම් කොට්ඨාසයකම ඇත.</p>
-<p tabindex="0" lang="si">ළමා කලා ප්‍රදර්ශන ජාතික ළමා ශ්‍රේෂ්ඨත්ව ජාතික උළෙලේ ගෞරවනීය ස්ථානයක් ගනියි.</p>
 </section>
 </div>
 </article>`

@@ -3,6 +3,7 @@ from flask_cors import CORS
 import json
 import os
 import tempfile
+import threading
 from pathlib import Path
 from extract import extract_pdf
 from structure import structure_content
@@ -91,12 +92,12 @@ def convert_pdf():
 
 @app.route("/demo-data", methods=["GET"])
 def demo_data():
-    """Return canonical demo data for the reader (always the Sinhala sample)."""
-    json_path = DEMO_DIR / "sample_output.json"
-    if not json_path.exists():
-        return jsonify(get_builtin_demo())
-    with open(json_path, encoding="utf-8") as f:
-        return jsonify(json.load(f))
+    """Return canonical Sinhala demo data for the reader."""
+    sample_path = DEMO_DIR / "sample_output.json"
+    if sample_path.exists():
+        with open(sample_path, encoding="utf-8") as f:
+            return jsonify(json.load(f))
+    return jsonify(generate_demo_data())
 
 @app.route("/download/epub", methods=["GET"])
 def download_epub():
@@ -109,93 +110,168 @@ def download_epub():
         download_name="sinhala_textbook_accessible.epub"
     )
 
-def get_builtin_demo():
-    """Built-in Sinhala demo content."""
+
+# ── Dynamic demo generation ──────────────────────────────────────────────────
+
+CHAPTERS_CONTENT = [
+    {
+        "number": 1,
+        "title": "පාඩම 1 — ශබ්ද හඳුනා ගනිමු",
+        "content": (
+            "අපේ රටේ ලස්සන ස්වභාවය ගැන ඉගෙන ගනිමු. "
+            "ගස් ගල් දිය ඇළ ශබ්ද නිකුත් කරයි. "
+            "කුරුළු ගීය ඇසෙයි. ගඟ ගලා යයි. "
+            "ළමයි සෙල්ලම් කරති. සතුටෙන් ගෙදර යති. "
+            "ශ්‍රී ලංකාව ලස්සන රටකි."
+        ),
+        "paragraphs": [
+            "අපේ රටේ ලස්සන ස්වභාවය ගැන ඉගෙන ගනිමු.",
+            "ගස් ගල් දිය ඇළ — ශබ්ද නිකුත් කරයි.",
+            "කුරුළු ගීය ඇසෙයි. ගඟ ගලා යයි.",
+            "ළමයි සෙල්ලම් කරති. සතුටෙන් ගෙදර යති.",
+            "ශ්‍රී ලංකාව ලස්සන රටකි.",
+        ],
+        "has_exercise": False,
+    },
+    {
+        "number": 2,
+        "title": "පාඩම 2 — ගණිතය ඉගෙනිමු",
+        "content": (
+            "එකක් + එකක් = දෙකයි. දෙකක් + දෙකක් = හතරයි. "
+            "ගණිතය ඉගෙන ගැනීම ප්‍රීතිමත් කාර්යයකි. "
+            "1, 2, 3, 4, 5 — ඉලක්කම් ගණිත කරමු. "
+            "ජීවිතයේ ගණිතය ඉතා වැදගත් වේ."
+        ),
+        "paragraphs": [
+            "එකක් + එකක් = දෙකයි.",
+            "ගණිතය ඉගෙන ගැනීම ප්‍රීතිමත් කාර්යයකි.",
+            "1, 2, 3, 4, 5 — ඉලක්කම් ගණිත කරමු.",
+            "ජීවිතයේ ගණිතය ඉතා වැදගත් වේ.",
+        ],
+        "has_exercise": True,
+    },
+    {
+        "number": 3,
+        "title": "පාඩම 3 — ලලිත කලා",
+        "content": (
+            "චිත්‍ර ඇඳීම ලස්සන කලාවකි. "
+            "පාට පාට රේඛා ඇඳ සිතුවමක් ගොඩ නඟමු. "
+            "නිල් පාට, රතු පාට, කහ පාට — ලෝකය සරලයි. "
+            "කලාව ළමයාගේ නිර්මාණශීලිත්වය වර්ධනය කරන හොඳ කුසලතාවකි."
+        ),
+        "paragraphs": [
+            "චිත්‍ර ඇඳීම ලස්සන කලාවකි.",
+            "නිල් පාට, රතු පාට, කහ පාට — ලෝකය සරලයි.",
+            "කලාව ළමයාගේ නිර්මාණශීලිත්වය වර්ධනය කරයි.",
+        ],
+        "has_exercise": False,
+    },
+]
+
+FALLBACK_SUMMARIES = {
+    1: "මෙම පාඩමේදී අපේ රටේ ලස්සන ස්වභාවය ගැන ඉගෙන ගනිමු. ශබ්ද හඳුනා ගන්නා ආකාරය ස්වභාවික උදාහරණ තුළින් දැනගනිමු.",
+    2: "මෙම පාඩමේදී සිංහල භාෂාවෙන් මූලික ගණිතය ඉගෙන ගනිමු. ඉලක්කම් සහ එකතු කිරීම් ගැන ප්‍රීතිමත්ව ඉගෙනිමු.",
+    3: "මෙම පාඩමේදී ළමයින් වර්ණ සහ කලාව ගැන ඉගෙන ගනිමු. චිත්‍ර ඇඳීමෙන් නිර්මාණශීලිත්වය වර්ධනය කරගනිමු.",
+}
+
+
+def build_chapter_html(number: int, title: str, paragraphs: list,
+                       summary: str, has_exercise: bool = False) -> str:
+    """Build accessible HTML for a chapter dynamically."""
+    html = f'<article lang="si" id="chapter-{number}" aria-labelledby="ch-{number}-heading" role="article">\n'
+    html += f'<a href="#ch-{number}-main" class="skip-link" tabindex="0">පාඩම් අන්තර්ගතයට යන්න</a>\n'
+    html += f'<div id="ch-{number}-main">\n'
+    html += f'<section id="ch-{number}" role="region" aria-label="{title}" lang="si">\n'
+    html += f'<h2 id="ch-{number}-heading" tabindex="0">{title}</h2>\n'
+
+    if summary:
+        html += f'<aside class="summary-box" role="note" lang="si" aria-label="පාඩම් සාරාංශය">\n'
+        html += f'  <strong>සාරාංශය:</strong> {summary}\n'
+        html += f'</aside>\n'
+
+    for para in paragraphs:
+        if para.strip():
+            html += f'<p tabindex="0" lang="si">{para}</p>\n'
+
+    if has_exercise:
+        html += '<aside class="exercise-box" role="note">\n'
+        html += '  <strong>අභ්‍යාසය:</strong>\n'
+        html += '  <p lang="si">ඉහත ඉගෙන ගත් දේ ගැන ලිවිය.</p>\n'
+        html += '</aside>\n'
+
+    html += '</section>\n</div>\n</article>\n'
+    return html
+
+
+def generate_demo_data() -> dict:
+    """Generate demo data dynamically with Sinhala summaries from MiniMax."""
+    summaries = {}
+    if MINIMAX_KEY:
+        try:
+            from minimax_processor import MinimaxProcessor
+            m = MinimaxProcessor(MINIMAX_KEY)
+            for ch in CHAPTERS_CONTENT:
+                print(f"Generating summary for {ch['title']}...")
+                summary = m.generate_summary(ch["content"], ch["title"])
+                if summary:
+                    summaries[ch["number"]] = summary
+                    print(f"  ✓ {summary[:60]}")
+        except Exception as e:
+            print(f"MiniMax summary generation error: {e}")
+
+    final_chapters = []
+    for ch in CHAPTERS_CONTENT:
+        summary = summaries.get(ch["number"]) or FALLBACK_SUMMARIES.get(ch["number"], "")
+        final_chapters.append({
+            "number": ch["number"],
+            "title": ch["title"],
+            "summary": summary,
+            "reading_time_minutes": max(1, len(ch["content"].split()) // 150),
+            "accessible_html": build_chapter_html(
+                ch["number"], ch["title"], ch["paragraphs"],
+                summary, ch.get("has_exercise", False)
+            ),
+            "images": [],
+            "has_exercise": ch.get("has_exercise", False),
+            "word_count": len(ch["content"].split()),
+        })
+
     return {
         "title": "සිංහල භාෂා පාඩම් — 3 ශ්‍රේණිය",
         "language": "si",
         "publisher": "Ministry of Education Sri Lanka",
-        "ai_enhanced": True,
-        "extraction_method": "gemini_vision_ocr",
+        "ai_enhanced": bool(MINIMAX_KEY),
+        "extraction_method": "dynamic_generation",
         "wcag_metadata": {
             "conformsTo": "WCAG 2.1 Level AA",
             "accessibilityFeature": [
                 "alternativeText",
                 "readingOrder",
                 "structuralNavigation",
-                "tableOfContents"
+                "tableOfContents",
             ],
-            "accessibilityHazard": "none"
+            "accessibilityHazard": "none",
         },
-        "chapters": [
-            {
-                "number": 1,
-                "title": "පාඩම 1 — ශබ්ද හඳුනා ගනිමු",
-                "summary": "Students learn to identify and pronounce Sinhala sounds through nature examples.",
-                "reading_time_minutes": 2,
-                "has_exercise": False,
-                "images": [],
-                "accessible_html": """<article lang="si" id="chapter-1" aria-labelledby="ch-1-heading" role="article">
-<a href="#ch-1-main" class="skip-link" tabindex="0">Skip to chapter content</a>
-<div id="ch-1-main">
-<section id="ch-1" role="region" aria-label="පාඩම 1 — ශබ්ද හඳුනා ගනිමු" lang="si">
-<h2 tabindex="0">පාඩම 1 — ශබ්ද හඳුනා ගනිමු</h2>
-<aside class="summary-box" role="note" aria-label="Chapter summary">
-  <strong>Summary:</strong> Students learn to identify and pronounce Sinhala sounds through nature examples.
-</aside>
-<p tabindex="0" lang="si">අපේ රටේ ලස්සන ස්වභාවය ගැන ඉගෙන ගනිමු. ගස් ගල් දිය ඇළ — ඒ සෑම දෙයක්ම ශබ්ද නිකුත් කරයි.</p>
-<p tabindex="0" lang="si">කුරුළු ගීය ඇසෙයි. ගඟ ගලා යයි. ළමයි සෙල්ලම් කරති. සතුටෙන් ගෙදර යති.</p>
-<p tabindex="0" lang="si">ශ්‍රී ලංකාව ලස්සන රටකි. එහි ළමයි දෙමාපියන් ආදරයෙන් ජීවත් වෙති.</p>
-</section>
-</div>
-</article>"""
-            },
-            {
-                "number": 2,
-                "title": "පාඩම 2 — ගණිතය ඉගෙනිමු",
-                "summary": "Introduction to basic addition and numbers in Sinhala.",
-                "reading_time_minutes": 2,
-                "has_exercise": True,
-                "images": [],
-                "accessible_html": """<article lang="si" id="chapter-2" aria-labelledby="ch-2-heading" role="article">
-<a href="#ch-2-main" class="skip-link" tabindex="0">Skip to chapter content</a>
-<div id="ch-2-main">
-<section id="ch-2" role="region" aria-label="පාඩම 2 — ගණිතය ඉගෙනිමු" lang="si">
-<h2 tabindex="0">පාඩම 2 — ගණිතය ඉගෙනිමු</h2>
-<aside class="summary-box" role="note" aria-label="Chapter summary">
-  <strong>Summary:</strong> Introduction to basic addition and numbers in Sinhala.
-</aside>
-<p tabindex="0" lang="si">එකක් + එකක් = දෙකයි. දෙකක් + දෙකක් = හතරයි.</p>
-<p tabindex="0" lang="si">ගණිතය ඉගෙන ගැනීම ප්‍රීතිමත් කාර්යයකි. සංඛ්‍යා ගැන දැනගන්නෙමු.</p>
-<p tabindex="0" lang="si">1, 2, 3, 4, 5 — ඉලක්කම් ගණිත කරමු. ජීවිතයේ ගණිතය ඉතා වැදගත් වේ.</p>
-</section>
-</div>
-</article>"""
-            },
-            {
-                "number": 3,
-                "title": "පාඩම 3 — ලලිත කලා",
-                "summary": "Children explore colors and art as a means of creative expression.",
-                "reading_time_minutes": 2,
-                "has_exercise": False,
-                "images": [],
-                "accessible_html": """<article lang="si" id="chapter-3" aria-labelledby="ch-3-heading" role="article">
-<a href="#ch-3-main" class="skip-link" tabindex="0">Skip to chapter content</a>
-<div id="ch-3-main">
-<section id="ch-3" role="region" aria-label="පාඩම 3 — ලලිත කලා" lang="si">
-<h2 tabindex="0">පාඩම 3 — ලලිත කලා</h2>
-<aside class="summary-box" role="note" aria-label="Chapter summary">
-  <strong>Summary:</strong> Children explore colors and art as a means of creative expression.
-</aside>
-<p tabindex="0" lang="si">චිත්‍ර ඇඳීම ලස්සන කලාවකි. පාට පාට රේඛා ඇඳ සිතුවමක් ගොඩ නඟමු.</p>
-<p tabindex="0" lang="si">නිල් පාට, රතු පාට, කහ පාට — ඒ සෑම පාටකම ලෝකය සරලයි.</p>
-<p tabindex="0" lang="si">කලාව ළමයාගේ නිර්මාණශීලිත්වය වර්ධනය කරන හොඳ කුසලතාවකි.</p>
-</section>
-</div>
-</article>"""
-            }
-        ]
+        "chapters": final_chapters,
     }
+
+
+def generate_and_cache_demo():
+    """Generate demo data on startup and cache to sample_output.json."""
+    sample_path = DEMO_DIR / "sample_output.json"
+    if not sample_path.exists() and MINIMAX_KEY:
+        print("Generating Sinhala demo data on startup...")
+        try:
+            data = generate_demo_data()
+            with open(sample_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+            print("Demo data cached to sample_output.json")
+        except Exception as e:
+            print(f"Demo generation error: {e}")
+
+
+threading.Thread(target=generate_and_cache_demo, daemon=True).start()
+
 
 if __name__ == "__main__":
     print(f"Gemini: {'configured' if GEMINI_KEY else 'not set'}")

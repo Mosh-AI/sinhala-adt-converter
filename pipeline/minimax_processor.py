@@ -99,20 +99,51 @@ Rules:
             }
 
     def generate_summary(self, chapter_text: str, chapter_title: str) -> str:
-        """Generate simple English summary for accessibility."""
+        """Generate Sinhala summary dynamically using MiniMax."""
         if not chapter_text.strip():
             return ""
 
-        prompt = f"""Chapter: {chapter_title}
+        prompt = f"""ඔබ ශ්‍රී ලංකා ප්‍රාථමික පාසල් සිංහල පෙළ පොත් සංස්කාරකයෙකි.
 
-Content: {chapter_text[:1500]}
+පාඩම් මාතෘකාව: {chapter_title}
 
-Write a simple 2-3 sentence English summary that an 8-year-old child could understand.
-Focus on the main educational topic. Be clear, simple, and encouraging.
+පාඩම් අන්තර්ගතය:
+{chapter_text[:1500]}
 
-Return ONLY the summary text:"""
+ඉහත පාඩමේ ප්‍රධාන අදහස සිංහල භාෂාවෙන් සරල වාක්‍ය 2-3 කින් ලිවිය.
 
-        return self._call(prompt, 200).strip()
+නීති:
+- සිංහල භාෂාවෙන් පමණක් ලිවිය
+- ඉංග්‍රීසි භාවිත නොකරය
+- 8 හැවිරිදි ළමයෙකුට තේරුම් ගත හැකි
+- සරල සිංහල වචන භාවිත කරය
+- වාක්‍ය 2-3 ක් පමණයි
+
+සාරාංශය:"""
+
+        result = self._call(prompt, 1024)
+
+        if result:
+            has_sinhala = any(
+                ord(c) >= 0x0D80 and ord(c) <= 0x0DFF
+                for c in result
+            )
+            if not has_sinhala:
+                retry_prompt = f"""වැදගත්: සිංහල අකුරු පමණක් භාවිත කරන්න. ඉංග්‍රීසි එපා.
+
+මෙම පාඩම සිංහල වාක්‍ය 2 කින් සාරාංශ කරන්න:
+{chapter_text[:500]}
+
+සිංහල පමණක්:"""
+                result = self._call(retry_prompt, 1024)
+
+        if result:
+            # Strip markdown bold prefix MiniMax sometimes adds
+            result = result.strip().lstrip('*').strip()
+            for prefix in ("සාරාංශය:", "සාරාංශය :"):
+                if result.startswith(prefix):
+                    result = result[len(prefix):].strip()
+        return result.strip() if result else ""
 
     def clean_sinhala_text(self, text: str) -> str:
         """Clean and normalize extracted Sinhala text."""
