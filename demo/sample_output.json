@@ -3,7 +3,7 @@
   "language": "si",
   "publisher": "Ministry of Education Sri Lanka",
   "ai_enhanced": true,
-  "extraction_method": "gemini_vision_ocr",
+  "extraction_method": "dynamic_generation",
   "wcag_metadata": {
     "conformsTo": "WCAG 2.1 Level AA",
     "accessibilityFeature": [
@@ -18,29 +18,32 @@
     {
       "number": 1,
       "title": "පාඩම 1 — ශබ්ද හඳුනා ගනිමු",
-      "summary": "Students learn to identify and pronounce Sinhala sounds through nature examples.",
-      "reading_time_minutes": 2,
-      "has_exercise": false,
+      "summary": "මෙම පාඩමේදී අපේ රටේ ලස්සන ස්වභාවය ගැන ඉගෙන ගනිමු. ශබ්ද හඳුනා ගන්නා ආකාරය ස්වභාවික උදාහරණ තුළින් දැනගනිමු.",
+      "reading_time_minutes": 1,
+      "accessible_html": "<article lang=\"si\" id=\"chapter-1\" aria-labelledby=\"ch-1-heading\" role=\"article\">\n<a href=\"#ch-1-main\" class=\"skip-link\" tabindex=\"0\">පාඩම් අන්තර්ගතයට යන්න</a>\n<div id=\"ch-1-main\">\n<section id=\"ch-1\" role=\"region\" aria-label=\"පාඩම 1 — ශබ්ද හඳුනා ගනිමු\" lang=\"si\">\n<h2 id=\"ch-1-heading\" tabindex=\"0\">පාඩම 1 — ශබ්ද හඳුනා ගනිමු</h2>\n<aside class=\"summary-box\" role=\"note\" lang=\"si\" aria-label=\"පාඩම් සාරාංශය\">\n  <strong>සාරාංශය:</strong> මෙම පාඩමේදී අපේ රටේ ලස්සන ස්වභාවය ගැන ඉගෙන ගනිමු. ශබ්ද හඳුනා ගන්නා ආකාරය ස්වභාවික උදාහරණ තුළින් දැනගනිමු.\n</aside>\n<p tabindex=\"0\" lang=\"si\">අපේ රටේ ලස්සන ස්වභාවය ගැන ඉගෙන ගනිමු.</p>\n<p tabindex=\"0\" lang=\"si\">ගස් ගල් දිය ඇළ — ශබ්ද නිකුත් කරයි.</p>\n<p tabindex=\"0\" lang=\"si\">කුරුළු ගීය ඇසෙයි. ගඟ ගලා යයි.</p>\n<p tabindex=\"0\" lang=\"si\">ළමයි සෙල්ලම් කරති. සතුටෙන් ගෙදර යති.</p>\n<p tabindex=\"0\" lang=\"si\">ශ්‍රී ලංකාව ලස්සන රටකි.</p>\n</section>\n</div>\n</article>\n",
       "images": [],
-      "accessible_html": "<article lang=\"si\" id=\"chapter-1\" aria-labelledby=\"ch-1-heading\" role=\"article\">\n<a href=\"#ch-1-main\" class=\"skip-link\" tabindex=\"0\">Skip to chapter content</a>\n<div id=\"ch-1-main\">\n<section id=\"ch-1\" role=\"region\" aria-label=\"පාඩම 1 — ශබ්ද හඳුනා ගනිමු\" lang=\"si\">\n<h2 tabindex=\"0\">පාඩම 1 — ශබ්ද හඳුනා ගනිමු</h2>\n<aside class=\"summary-box\" role=\"note\" aria-label=\"Chapter summary\">\n  <strong>Summary:</strong> Students learn to identify and pronounce Sinhala sounds through nature examples.\n</aside>\n<p tabindex=\"0\" lang=\"si\">අපේ රටේ ලස්සන ස්වභාවය ගැන ඉගෙන ගනිමු. ගස් ගල් දිය ඇළ — ඒ සෑම දෙයක්ම ශබ්ද නිකුත් කරයි.</p>\n<p tabindex=\"0\" lang=\"si\">කුරුළු ගීය ඇසෙයි. ගඟ ගලා යයි. ළමයි සෙල්ලම් කරති. සතුටෙන් ගෙදර යති.</p>\n<p tabindex=\"0\" lang=\"si\">ශ්‍රී ලංකාව ලස්සන රටකි. එහි ළමයි දෙමාපියන් ආදරයෙන් ජීවත් වෙති.</p>\n</section>\n</div>\n</article>"
+      "has_exercise": false,
+      "word_count": 30
     },
     {
       "number": 2,
       "title": "පාඩම 2 — ගණිතය ඉගෙනිමු",
-      "summary": "Introduction to basic addition and numbers in Sinhala.",
-      "reading_time_minutes": 2,
-      "has_exercise": true,
+      "summary": "ගණිතය ඉගෙන ගැනීම මනා කාර්යයකි. 1+1=2, 2+2=4 ආදි එකතු කිරීම් ඉගෙන ගත හැකි වේ. ගණිතය ජීවිතයේ ඉතා වැදගත් වේ.",
+      "reading_time_minutes": 1,
+      "accessible_html": "<article lang=\"si\" id=\"chapter-2\" aria-labelledby=\"ch-2-heading\" role=\"article\">\n<a href=\"#ch-2-main\" class=\"skip-link\" tabindex=\"0\">පාඩම් අන්තර්ගතයට යන්න</a>\n<div id=\"ch-2-main\">\n<section id=\"ch-2\" role=\"region\" aria-label=\"පාඩම 2 — ගණිතය ඉගෙනිමු\" lang=\"si\">\n<h2 id=\"ch-2-heading\" tabindex=\"0\">පාඩම 2 — ගණිතය ඉගෙනිමු</h2>\n<aside class=\"summary-box\" role=\"note\" lang=\"si\" aria-label=\"පාඩම් සාරාංශය\">\n  <strong>සාරාංශය:</strong> ගණිතය ඉගෙන ගැනීම මනා කාර්යයකි. 1+1=2, 2+2=4 ආදි එකතු කිරීම් ඉගෙන ගත හැකි වේ. ගණිතය ජීවිතයේ ඉතා වැදගත් වේ.\n</aside>\n<p tabindex=\"0\" lang=\"si\">එකක් + එකක් = දෙකයි.</p>\n<p tabindex=\"0\" lang=\"si\">ගණිතය ඉගෙන ගැනීම ප්‍රීතිමත් කාර්යයකි.</p>\n<p tabindex=\"0\" lang=\"si\">1, 2, 3, 4, 5 — ඉලක්කම් ගණිත කරමු.</p>\n<p tabindex=\"0\" lang=\"si\">ජීවිතයේ ගණිතය ඉතා වැදගත් වේ.</p>\n<aside class=\"exercise-box\" role=\"note\">\n  <strong>අභ්‍යාසය:</strong>\n  <p lang=\"si\">ඉහත ඉගෙන ගත් දේ ගැන ලිවිය.</p>\n</aside>\n</section>\n</div>\n</article>\n",
       "images": [],
-      "accessible_html": "<article lang=\"si\" id=\"chapter-2\" aria-labelledby=\"ch-2-heading\" role=\"article\">\n<a href=\"#ch-2-main\" class=\"skip-link\" tabindex=\"0\">Skip to chapter content</a>\n<div id=\"ch-2-main\">\n<section id=\"ch-2\" role=\"region\" aria-label=\"පාඩම 2 — ගණිතය ඉගෙනිමු\" lang=\"si\">\n<h2 tabindex=\"0\">පාඩම 2 — ගණිතය ඉගෙනිමු</h2>\n<aside class=\"summary-box\" role=\"note\" aria-label=\"Chapter summary\">\n  <strong>Summary:</strong> Introduction to basic addition and numbers in Sinhala.\n</aside>\n<p tabindex=\"0\" lang=\"si\">එකක් + එකක් = දෙකයි. දෙකක් + දෙකක් = හතරයි.</p>\n<p tabindex=\"0\" lang=\"si\">ගණිතය ඉගෙන ගැනීම ප්‍රීතිමත් කාර්යයකි. සංඛ්‍යා ගැන දැනගන්නෙමු.</p>\n<p tabindex=\"0\" lang=\"si\">1, 2, 3, 4, 5 — ඉලක්කම් ගණිත කරමු. ජීවිතයේ ගණිතය ඉතා වැදගත් වේ.</p>\n</section>\n</div>\n</article>"
+      "has_exercise": true,
+      "word_count": 29
     },
     {
       "number": 3,
       "title": "පාඩම 3 — ලලිත කලා",
-      "summary": "Children explore colors and art as a means of creative expression.",
-      "reading_time_minutes": 2,
-      "has_exercise": false,
+      "summary": "චිත්‍ර ඇඳීම ලස්සන කලාවකි. අපි පාට පාට රේඛා භාවිතයෙන් සිතුවම් නිර්මාණය කරමු. මේ කලාව ළමයෙකුගේ විද්‍යාවට වර්ධනය කරන හොඳ කුසලතාවකි.",
+      "reading_time_minutes": 1,
+      "accessible_html": "<article lang=\"si\" id=\"chapter-3\" aria-labelledby=\"ch-3-heading\" role=\"article\">\n<a href=\"#ch-3-main\" class=\"skip-link\" tabindex=\"0\">පාඩම් අන්තර්ගතයට යන්න</a>\n<div id=\"ch-3-main\">\n<section id=\"ch-3\" role=\"region\" aria-label=\"පාඩම 3 — ලලිත කලා\" lang=\"si\">\n<h2 id=\"ch-3-heading\" tabindex=\"0\">පාඩම 3 — ලලිත කලා</h2>\n<aside class=\"summary-box\" role=\"note\" lang=\"si\" aria-label=\"පාඩම් සාරාංශය\">\n  <strong>සාරාංශය:</strong> චිත්‍ර ඇඳීම ලස්සන කලාවකි. අපි පාට පාට රේඛා භාවිතයෙන් සිතුවම් නිර්මාණය කරමු. මේ කලාව ළමයෙකුගේ විද්‍යාවට වර්ධනය කරන හොඳ කුසලතාවකි.\n</aside>\n<p tabindex=\"0\" lang=\"si\">චිත්‍ර ඇඳීම ලස්සන කලාවකි.</p>\n<p tabindex=\"0\" lang=\"si\">නිල් පාට, රතු පාට, කහ පාට — ලෝකය සරලයි.</p>\n<p tabindex=\"0\" lang=\"si\">කලාව ළමයාගේ නිර්මාණශීලිත්වය වර්ධනය කරයි.</p>\n</section>\n</div>\n</article>\n",
       "images": [],
-      "accessible_html": "<article lang=\"si\" id=\"chapter-3\" aria-labelledby=\"ch-3-heading\" role=\"article\">\n<a href=\"#ch-3-main\" class=\"skip-link\" tabindex=\"0\">Skip to chapter content</a>\n<div id=\"ch-3-main\">\n<section id=\"ch-3\" role=\"region\" aria-label=\"පාඩම 3 — ලලිත කලා\" lang=\"si\">\n<h2 tabindex=\"0\">පාඩම 3 — ලලිත කලා</h2>\n<aside class=\"summary-box\" role=\"note\" aria-label=\"Chapter summary\">\n  <strong>Summary:</strong> Children explore colors and art as a means of creative expression.\n</aside>\n<p tabindex=\"0\" lang=\"si\">චිත්‍ර ඇඳීම ලස්සන කලාවකි. පාට පාට රේඛා ඇඳ සිතුවමක් ගොඩ නඟමු.</p>\n<p tabindex=\"0\" lang=\"si\">නිල් පාට, රතු පාට, කහ පාට — ඒ සෑම පාටකම ලෝකය සරලයි.</p>\n<p tabindex=\"0\" lang=\"si\">කලාව ළමයාගේ නිර්මාණශීලිත්වය වර්ධනය කරන හොඳ කුසලතාවකි.</p>\n</section>\n</div>\n</article>"
+      "has_exercise": false,
+      "word_count": 27
     }
   ]
 }

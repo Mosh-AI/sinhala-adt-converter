@@ -138,12 +138,22 @@ Rules:
                 result = self._call(retry_prompt, 1024)
 
         if result:
-            # Strip markdown bold prefix MiniMax sometimes adds
-            result = result.strip().lstrip('*').strip()
-            for prefix in ("සාරාංශය:", "සාරාංශය :"):
-                if result.startswith(prefix):
-                    result = result[len(prefix):].strip()
-        return result.strip() if result else ""
+            import re
+            # Remove all markdown asterisks (Sinhala never uses *)
+            result = result.replace('*', '').strip()
+            # Strip echoed prompt labels — model sometimes returns "සාරාංශය:\n\n<text>"
+            for label in ("සාරාංශය:", "සාරාංශය", "Summary:", "Summary"):
+                if result.startswith(label):
+                    result = result[len(label):].strip()
+                    break
+            # If model added "intro:\n\nActual summary" pattern, take part after :\n\n
+            if ':\n\n' in result:
+                result = result.split(':\n\n', 1)[-1].strip()
+            elif ':\n' in result:
+                result = result.split(':\n', 1)[-1].strip()
+            # Remove leftover leading non-Sinhala chars (spaces, colons, etc.)
+            result = re.sub(r'^[^\u0D80-\u0DFF]+', '', result).strip()
+        return result if result else ""
 
     def clean_sinhala_text(self, text: str) -> str:
         """Clean and normalize extracted Sinhala text."""
