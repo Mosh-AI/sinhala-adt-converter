@@ -82,7 +82,7 @@ def text_to_speech():
     data = request.get_json(silent=True) or {}
     text = (data.get("text") or "").strip()
     speed = float(data.get("speed", 1.0))
-    voice = data.get("voice", "si-LK-Standard-A")
+    voice = data.get("voice", "")
 
     if not text:
         return jsonify({"error": "No text provided"}), 400
@@ -123,7 +123,7 @@ def tts_status():
         "configured": bool(GOOGLE_TTS_KEY),
         "provider": "Google Cloud Text-to-Speech",
         "language": "si-LK",
-        "default_voice": "si-LK-Standard-A",
+        "default_voice": "auto (si-LK)",
     })
 
 @app.route("/convert", methods=["POST"])

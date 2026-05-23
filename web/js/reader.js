@@ -9,7 +9,7 @@ class SinhalaReader {
     this.isPlaying = false;
     // Google Cloud TTS (backend)
     this.ttsConfigured = false;
-    this.ttsVoice = 'si-LK-Standard-A';
+    this.ttsVoice = '';  // empty = let Google auto-select si-LK voice
     this.audio = null;           // HTML5 Audio element
     // Browser speechSynthesis fallback
     this.sinhalaVoice = null;
@@ -199,7 +199,7 @@ class SinhalaReader {
         }
       } catch (_) { /* keep default voice */ }
 
-      this.updateTTSStatus(`Google Cloud TTS ready · Voice: ${this.ttsVoice}`);
+      this.updateTTSStatus(`Google Cloud TTS ready · Sinhala (si-LK)`);
       return;
     }
 
@@ -279,7 +279,7 @@ class SinhalaReader {
         this.audio.onended = () => {
           this.isPlaying = false;
           this.updatePlayButton(false);
-          this.updateTTSStatus(`Google Cloud TTS ready · Voice: ${this.ttsVoice}`);
+          this.updateTTSStatus(`Google Cloud TTS ready · Sinhala (si-LK)`);
           URL.revokeObjectURL(url);
         };
         this.audio.onerror = () => {
@@ -288,7 +288,7 @@ class SinhalaReader {
           this.updateTTSStatus('Audio playback error');
         };
         this.audio.play();
-        this.updateTTSStatus(`Playing · ${this.ttsVoice} · ${speed}x`);
+        this.updateTTSStatus(`Playing · si-LK · ${speed}x`);
         return;
 
       } catch (err) {
@@ -335,7 +335,7 @@ class SinhalaReader {
     this.isPlaying = false;
     this.updatePlayButton(false);
     if (this.ttsConfigured) {
-      this.updateTTSStatus(`Google Cloud TTS ready · Voice: ${this.ttsVoice}`);
+      this.updateTTSStatus(`Google Cloud TTS ready · Sinhala (si-LK)`);
     }
   }
 

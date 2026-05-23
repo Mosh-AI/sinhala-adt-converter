@@ -21,7 +21,7 @@ CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 TTS_ENDPOINT = "https://texttospeech.googleapis.com/v1/text:synthesize"
 
-DEFAULT_VOICE = "si-LK-Standard-A"
+DEFAULT_VOICE = ""  # Let Google auto-select the best available si-LK voice
 LANGUAGE_CODE = "si-LK"
 
 
@@ -61,7 +61,7 @@ class GoogleTTS:
                     "input": {"text": text},
                     "voice": {
                         "languageCode": LANGUAGE_CODE,
-                        "name": voice,
+                        **({"name": voice} if voice else {}),
                     },
                     "audioConfig": {
                         "audioEncoding": "MP3",
