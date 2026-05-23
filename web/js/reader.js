@@ -7,6 +7,11 @@ class SinhalaReader {
     this.fontSize = 'md';
     this.highContrast = false;
     this.isPlaying = false;
+    // Google Cloud TTS (backend)
+    this.ttsConfigured = false;
+    this.ttsVoice = 'si-LK-Standard-A';
+    this.audio = null;           // HTML5 Audio element
+    // Browser speechSynthesis fallback
     this.sinhalaVoice = null;
     this.utterance = null;
     this.synth = null;
@@ -15,11 +20,11 @@ class SinhalaReader {
   async init() {
     this.showLoading(true);
     await this.loadContent();
+    await this.setupTTS();   // probe backend before rendering
     this.buildSidebar();
     this.renderChapter(0);
     this.setupControls();
     this.setupKeyboard();
-    this.setupTTS();
     this.showLoading(false);
   }
 
@@ -152,7 +157,7 @@ class SinhalaReader {
 
   renderChapter(index) {
     if (!this.data || index < 0 || index >= this.data.chapters.length) return;
-    this.stopTTS();
+    this.stopTTS();   // stops both audio element and browser synth
     this.currentChapter = index;
     const ch = this.data.chapters[index];
     const content = document.getElementById('content');
@@ -170,9 +175,37 @@ class SinhalaReader {
     setTimeout(() => content?.focus(), 100);
   }
 
-  setupTTS() {
+  async setupTTS() {
+    // ── 1. Probe backend Google Cloud TTS ────────────────────
+    try {
+      const res = await fetch('/api/tts/status', { signal: AbortSignal.timeout(3000) });
+      if (res.ok) {
+        const s = await res.json();
+        this.ttsConfigured = s.configured === true;
+      }
+    } catch (_) { /* backend unreachable — fall through */ }
+
+    if (this.ttsConfigured) {
+      // Fetch available voices and pick the best one
+      try {
+        const vRes = await fetch('/api/tts/voices', { signal: AbortSignal.timeout(5000) });
+        if (vRes.ok) {
+          const { voices } = await vRes.json();
+          if (voices.length) {
+            // Prefer female Standard-A, then first available
+            const female = voices.find(v => v.gender === 'FEMALE') || voices[0];
+            this.ttsVoice = female.name;
+          }
+        }
+      } catch (_) { /* keep default voice */ }
+
+      this.updateTTSStatus(`Google Cloud TTS ready · Voice: ${this.ttsVoice}`);
+      return;
+    }
+
+    // ── 2. Browser speechSynthesis fallback ──────────────────
     if (!window.speechSynthesis) {
-      this.updateTTSStatus('Text-to-speech not supported in this browser');
+      this.updateTTSStatus('Text-to-speech not available in this browser');
       return;
     }
     this.synth = window.speechSynthesis;
@@ -186,21 +219,19 @@ class SinhalaReader {
       this.sinhalaVoice = findVoice();
       this.updateTTSStatus(
         this.sinhalaVoice
-          ? `Voice: ${this.sinhalaVoice.name} (${this.sinhalaVoice.lang})`
-          : 'No Sinhala voice installed — using browser default. Install si-LK voice pack for best results.'
+          ? `Browser TTS · Voice: ${this.sinhalaVoice.name} (${this.sinhalaVoice.lang})`
+          : 'Browser TTS · No si-LK voice installed — install Sinhala voice pack for best results'
       );
     };
-    // Fallback for browsers that don't fire onvoiceschanged
     setTimeout(() => {
       if (!this.sinhalaVoice) {
         this.sinhalaVoice = findVoice();
-        this.updateTTSStatus(
-          this.sinhalaVoice
-            ? `Voice: ${this.sinhalaVoice.name}`
-            : 'No si-LK voice — using browser default'
+        this.updateTTSStatus(this.sinhalaVoice
+          ? `Browser TTS · ${this.sinhalaVoice.name}`
+          : 'Browser TTS · No si-LK voice — using default'
         );
       }
-    }, 1000);
+    }, 800);
   }
 
   toggleTTS() {
@@ -211,22 +242,82 @@ class SinhalaReader {
     }
   }
 
-  startTTS() {
-    if (!this.synth) return;
+  async startTTS() {
     const content = document.getElementById('content');
-    const text = content ? (content.innerText || content.textContent || '') : '';
-    if (!text.trim()) return;
+    const text = content ? (content.innerText || content.textContent || '').trim() : '';
+    if (!text) return;
 
+    const speed = parseFloat(document.getElementById('speed-select')?.value || '1');
+
+    // ── Google Cloud TTS (backend) ────────────────────────────
+    if (this.ttsConfigured) {
+      this.updateTTSStatus('Generating audio…');
+      this.updatePlayButton(true);
+      this.isPlaying = true;
+
+      try {
+        const res = await fetch('/api/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, speed, voice: this.ttsVoice }),
+          signal: AbortSignal.timeout(25000),
+        });
+
+        if (!res.ok) throw new Error(`TTS API ${res.status}`);
+
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+
+        // Release previous audio
+        if (this.audio) {
+          this.audio.pause();
+          URL.revokeObjectURL(this.audio.src);
+        }
+
+        this.audio = new Audio(url);
+        this.audio.playbackRate = speed;
+        this.audio.onended = () => {
+          this.isPlaying = false;
+          this.updatePlayButton(false);
+          this.updateTTSStatus(`Google Cloud TTS ready · Voice: ${this.ttsVoice}`);
+          URL.revokeObjectURL(url);
+        };
+        this.audio.onerror = () => {
+          this.isPlaying = false;
+          this.updatePlayButton(false);
+          this.updateTTSStatus('Audio playback error');
+        };
+        this.audio.play();
+        this.updateTTSStatus(`Playing · ${this.ttsVoice} · ${speed}x`);
+        return;
+
+      } catch (err) {
+        console.warn('Google TTS failed, falling back to browser:', err);
+        this.isPlaying = false;
+        this.updatePlayButton(false);
+        this.updateTTSStatus('Cloud TTS unavailable — using browser fallback');
+        // Fall through to browser TTS below
+      }
+    }
+
+    // ── Browser speechSynthesis fallback ─────────────────────
+    if (!this.synth) {
+      this.updateTTSStatus('Text-to-speech not available');
+      return;
+    }
     this.synth.cancel();
     this.utterance = new SpeechSynthesisUtterance(text);
     if (this.sinhalaVoice) this.utterance.voice = this.sinhalaVoice;
     this.utterance.lang = 'si-LK';
-    this.utterance.rate = parseFloat(document.getElementById('speed-select')?.value || '1');
-    this.utterance.onend = () => { this.isPlaying = false; this.updatePlayButton(false); };
+    this.utterance.rate = speed;
+    this.utterance.onend = () => {
+      this.isPlaying = false;
+      this.updatePlayButton(false);
+    };
     this.utterance.onerror = (e) => {
       this.isPlaying = false;
       this.updatePlayButton(false);
-      console.warn('TTS error:', e);
+      console.warn('Browser TTS error:', e);
     };
     this.synth.speak(this.utterance);
     this.isPlaying = true;
@@ -234,9 +325,18 @@ class SinhalaReader {
   }
 
   stopTTS() {
+    // Stop Google Cloud TTS audio
+    if (this.audio) {
+      this.audio.pause();
+      this.audio.currentTime = 0;
+    }
+    // Stop browser TTS
     if (this.synth) this.synth.cancel();
     this.isPlaying = false;
     this.updatePlayButton(false);
+    if (this.ttsConfigured) {
+      this.updateTTSStatus(`Google Cloud TTS ready · Voice: ${this.ttsVoice}`);
+    }
   }
 
   updatePlayButton(playing) {

@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import json
+import io
 import os
 import tempfile
 import threading
@@ -16,8 +17,9 @@ CORS(app, origins=["http://localhost", "https://adt.skymaxsolution.com", "*"])
 DEMO_DIR = Path(__file__).parent.parent / "demo"
 DEMO_DIR.mkdir(exist_ok=True)
 
-GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "")
+GEMINI_KEY  = os.environ.get("GEMINI_API_KEY", "")
 MINIMAX_KEY = os.environ.get("MINIMAX_API_KEY", "")
+GOOGLE_TTS_KEY = os.environ.get("GOOGLE_TTS_KEY", "")
 
 @app.route("/health", methods=["GET"])
 def health():
@@ -26,12 +28,13 @@ def health():
         "service": "Sinhala ADT Converter",
         "gemini_configured": bool(GEMINI_KEY),
         "minimax_configured": bool(MINIMAX_KEY),
+        "tts_configured": bool(GOOGLE_TTS_KEY),
         "ai_enabled": bool(GEMINI_KEY),
     })
 
 @app.route("/test-ai", methods=["GET"])
 def test_ai():
-    """Test both AI connections."""
+    """Test all AI service connections."""
     results = {}
     if GEMINI_KEY:
         try:
@@ -53,7 +56,75 @@ def test_ai():
     else:
         results["minimax"] = "Not configured"
 
+    if GOOGLE_TTS_KEY:
+        try:
+            from tts_engine import GoogleTTS
+            t = GoogleTTS(GOOGLE_TTS_KEY)
+            results["tts"] = "Connected" if t.test_connection() else "Failed"
+        except Exception as e:
+            results["tts"] = f"Error: {e}"
+    else:
+        results["tts"] = "Not configured"
+
     return jsonify(results)
+
+
+@app.route("/tts", methods=["POST"])
+def text_to_speech():
+    """
+    Convert Sinhala text to MP3 using Google Cloud TTS.
+    POST body: {"text": "...", "speed": 1.0, "voice": "si-LK-Standard-A"}
+    Returns: audio/mpeg binary stream
+    """
+    if not GOOGLE_TTS_KEY:
+        return jsonify({"error": "Google TTS not configured"}), 503
+
+    data = request.get_json(silent=True) or {}
+    text = (data.get("text") or "").strip()
+    speed = float(data.get("speed", 1.0))
+    voice = data.get("voice", "si-LK-Standard-A")
+
+    if not text:
+        return jsonify({"error": "No text provided"}), 400
+
+    # Limit to ~5000 chars per request (Google's recommended chunk size)
+    text = text[:5000]
+
+    from tts_engine import GoogleTTS
+    tts = GoogleTTS(GOOGLE_TTS_KEY)
+    audio = tts.synthesize(text, speed=speed, voice=voice)
+
+    if audio:
+        return send_file(
+            io.BytesIO(audio),
+            mimetype="audio/mpeg",
+            as_attachment=False,
+            download_name="sinhala_tts.mp3",
+        )
+
+    return jsonify({"error": "TTS synthesis failed"}), 500
+
+
+@app.route("/tts/voices", methods=["GET"])
+def tts_voices():
+    """Return available si-LK voices from Google Cloud TTS."""
+    if not GOOGLE_TTS_KEY:
+        return jsonify({"voices": [], "configured": False})
+    from tts_engine import GoogleTTS
+    tts = GoogleTTS(GOOGLE_TTS_KEY)
+    voices = tts.available_voices()
+    return jsonify({"voices": voices, "configured": True})
+
+
+@app.route("/tts/status", methods=["GET"])
+def tts_status():
+    """Quick status check for TTS configuration."""
+    return jsonify({
+        "configured": bool(GOOGLE_TTS_KEY),
+        "provider": "Google Cloud Text-to-Speech",
+        "language": "si-LK",
+        "default_voice": "si-LK-Standard-A",
+    })
 
 @app.route("/convert", methods=["POST"])
 def convert_pdf():
@@ -274,6 +345,7 @@ threading.Thread(target=generate_and_cache_demo, daemon=True).start()
 
 
 if __name__ == "__main__":
-    print(f"Gemini: {'configured' if GEMINI_KEY else 'not set'}")
-    print(f"MiniMax: {'configured' if MINIMAX_KEY else 'not set'}")
+    print(f"Gemini:      {'configured' if GEMINI_KEY else 'not set'}")
+    print(f"MiniMax:     {'configured' if MINIMAX_KEY else 'not set'}")
+    print(f"Google TTS:  {'configured' if GOOGLE_TTS_KEY else 'not set — add GOOGLE_TTS_KEY to .env'}")
     app.run(host="0.0.0.0", port=5050, debug=False)
