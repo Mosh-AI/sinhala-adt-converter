@@ -91,10 +91,8 @@ def convert_pdf():
 
 @app.route("/demo-data", methods=["GET"])
 def demo_data():
-    """Return demo data for the reader."""
-    json_path = DEMO_DIR / "latest_output.json"
-    if not json_path.exists():
-        json_path = DEMO_DIR / "sample_output.json"
+    """Return canonical demo data for the reader (always the Sinhala sample)."""
+    json_path = DEMO_DIR / "sample_output.json"
     if not json_path.exists():
         return jsonify(get_builtin_demo())
     with open(json_path, encoding="utf-8") as f:
