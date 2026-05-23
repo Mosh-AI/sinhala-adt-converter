@@ -34,6 +34,7 @@
       <div class="nav-links" role="list">
         <a href="#how-it-works" role="listitem">How it works</a>
         <a href="#features" role="listitem">Features</a>
+        <a href="#upload" role="listitem">Upload PDF</a>
         <a href="#demo" role="listitem">Demo</a>
         <a href="https://github.com/Mosh-AI/sinhala-adt-converter" target="_blank" rel="noopener" role="listitem" aria-label="View on GitHub (opens in new tab)">GitHub</a>
       </div>
@@ -47,6 +48,7 @@
     <div class="mobile-menu" id="mobile-menu" role="menu" aria-hidden="true">
       <a href="#how-it-works" role="menuitem">How it works</a>
       <a href="#features" role="menuitem">Features</a>
+      <a href="#upload" role="menuitem">Upload PDF</a>
       <a href="#demo" role="menuitem">Demo</a>
       <a href="https://github.com/Mosh-AI/sinhala-adt-converter" target="_blank" rel="noopener" role="menuitem">GitHub</a>
       <a href="reader.html" class="btn btn-primary" role="menuitem">Open Reader</a>
@@ -341,6 +343,99 @@
       </div>
     </section>
 
+    <!-- UPLOAD SECTION -->
+    <section id="upload" class="upload-section" aria-labelledby="upload-heading">
+      <div class="container">
+        <div class="section-header">
+          <h2 id="upload-heading">Convert Your Textbook</h2>
+          <p>Upload any Sri Lanka Ministry of Education Sinhala PDF textbook and get a fully accessible digital version.</p>
+        </div>
+
+        <!-- Upload box -->
+        <div class="upload-box" id="upload-box">
+          <div class="drop-zone" id="drop-zone" role="button" tabindex="0" aria-label="Drop PDF here or click to browse">
+            <div class="drop-icon" aria-hidden="true">📄</div>
+            <div class="drop-title">Drop your PDF here</div>
+            <div class="drop-sub">or click to browse files</div>
+            <div class="drop-info">Supports text-based and scanned PDFs · Max 50MB</div>
+            <input type="file" id="pdf-input" accept=".pdf" class="file-input" aria-label="Choose PDF file">
+          </div>
+
+          <div class="file-info" id="file-info" hidden>
+            <span class="file-icon" aria-hidden="true">📄</span>
+            <span class="file-name" id="file-name"></span>
+            <span class="file-size" id="file-size"></span>
+            <button class="file-remove" id="file-remove" aria-label="Remove selected file">✕</button>
+          </div>
+
+          <button class="btn-convert" id="convert-btn" disabled aria-label="Convert PDF to accessible format">
+            Convert to Accessible Format
+          </button>
+        </div>
+
+        <!-- Progress -->
+        <div class="upload-progress" id="upload-progress" hidden aria-live="polite">
+          <div class="steps-indicator" role="list" aria-label="Conversion steps">
+            <div class="step-item" id="step-upload" role="listitem">
+              <div class="step-dot" aria-hidden="true"></div>
+              <span>Uploading</span>
+            </div>
+            <div class="step-item" id="step-extract" role="listitem">
+              <div class="step-dot" aria-hidden="true"></div>
+              <span>Extracting</span>
+            </div>
+            <div class="step-item" id="step-ai" role="listitem">
+              <div class="step-dot" aria-hidden="true"></div>
+              <span>AI processing</span>
+            </div>
+            <div class="step-item" id="step-epub" role="listitem">
+              <div class="step-dot" aria-hidden="true"></div>
+              <span>Generating EPUB</span>
+            </div>
+            <div class="step-item" id="step-done" role="listitem">
+              <div class="step-dot" aria-hidden="true"></div>
+              <span>Done</span>
+            </div>
+          </div>
+
+          <div class="progress-bar-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress-track">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+          </div>
+
+          <p class="progress-status" id="progress-status">Uploading your PDF...</p>
+          <button class="btn-cancel" id="cancel-btn" aria-label="Cancel conversion">Cancel</button>
+        </div>
+
+        <!-- Result -->
+        <div class="upload-result" id="upload-result" hidden>
+
+          <div class="result-card" id="result-success" hidden>
+            <div class="result-icon" aria-hidden="true">✅</div>
+            <h3 id="result-title">Conversion Complete!</h3>
+            <div class="result-meta" aria-label="Conversion details">
+              <span id="result-chapters"></span>
+              <span id="result-method"></span>
+              <span id="result-ai"></span>
+            </div>
+            <div class="result-actions">
+              <a href="reader.html" class="btn btn-primary" id="open-reader-btn">Open in Reader</a>
+              <a href="/api/download/epub" class="btn-secondary" id="download-epub-btn" download>Download EPUB3</a>
+              <button class="btn btn-outline" id="convert-another-btn">Convert Another</button>
+            </div>
+            <p class="result-note">The reader is now loaded with your textbook. TTS, keyboard navigation, and all accessibility features are ready.</p>
+          </div>
+
+          <div class="result-card error-card" id="result-error" hidden>
+            <div class="result-icon" aria-hidden="true">❌</div>
+            <h3>Conversion Failed</h3>
+            <p class="error-message" id="error-message"></p>
+            <button class="btn btn-primary" id="try-again-btn">Try Again</button>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
     <!-- DEMO SECTION -->
     <section id="demo" class="demo-section" aria-labelledby="demo-heading">
       <div class="container">
@@ -461,6 +556,243 @@
         }
       });
     });
+  </script>
+
+  <!-- PDF Upload Script -->
+  <script>
+  (function () {
+    const dropZone      = document.getElementById('drop-zone');
+    const fileInput     = document.getElementById('pdf-input');
+    const fileInfo      = document.getElementById('file-info');
+    const fileName      = document.getElementById('file-name');
+    const fileSize      = document.getElementById('file-size');
+    const fileRemove    = document.getElementById('file-remove');
+    const convertBtn    = document.getElementById('convert-btn');
+    const uploadBox     = document.getElementById('upload-box');
+    const progressEl    = document.getElementById('upload-progress');
+    const progressFill  = document.getElementById('progress-fill');
+    const progressStatus = document.getElementById('progress-status');
+    const progressTrack = document.getElementById('progress-track');
+    const resultDiv     = document.getElementById('upload-result');
+    const resultSuccess = document.getElementById('result-success');
+    const resultError   = document.getElementById('result-error');
+    const cancelBtn     = document.getElementById('cancel-btn');
+    const tryAgain      = document.getElementById('try-again-btn');
+    const convertAnother = document.getElementById('convert-another-btn');
+    const resultTitle   = document.getElementById('result-title');
+    const resultChapters = document.getElementById('result-chapters');
+    const resultMethod  = document.getElementById('result-method');
+    const resultAI      = document.getElementById('result-ai');
+    const errorMsg      = document.getElementById('error-message');
+
+    const STEPS = [
+      { id: 'step-upload',  label: 'Uploading PDF...',           pct: 15 },
+      { id: 'step-extract', label: 'Extracting text from PDF...', pct: 35 },
+      { id: 'step-ai',      label: 'AI is processing content...', pct: 65 },
+      { id: 'step-epub',    label: 'Generating EPUB3 file...',    pct: 85 },
+      { id: 'step-done',    label: 'Conversion complete!',        pct: 100 },
+    ];
+
+    let selectedFile = null;
+    let xhr = null;
+    let stepTimer = null;
+    let currentStep = 0;
+
+    // ── File selection ───────────────────────────────────────────
+    fileInput.addEventListener('change', e => {
+      if (e.target.files[0]) selectFile(e.target.files[0]);
+    });
+    fileRemove.addEventListener('click', clearFile);
+
+    // Keyboard activation of drop zone
+    dropZone.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') fileInput.click();
+    });
+
+    // ── Drag and drop ────────────────────────────────────────────
+    dropZone.addEventListener('dragover', e => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+    dropZone.addEventListener('dragleave', e => {
+      if (!dropZone.contains(e.relatedTarget))
+        dropZone.classList.remove('dragover');
+    });
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      const f = e.dataTransfer.files[0];
+      if (!f) return;
+      if (f.type !== 'application/pdf' && !f.name.toLowerCase().endsWith('.pdf')) {
+        showToast('Please drop a PDF file');
+        return;
+      }
+      selectFile(f);
+    });
+
+    // ── Buttons ──────────────────────────────────────────────────
+    convertBtn.addEventListener('click', startConversion);
+    cancelBtn.addEventListener('click', () => { if (xhr) xhr.abort(); resetToUpload(); });
+    tryAgain.addEventListener('click', resetToUpload);
+    convertAnother.addEventListener('click', resetToUpload);
+
+    // ── Functions ────────────────────────────────────────────────
+    function selectFile(file) {
+      if (file.size > 50 * 1024 * 1024) {
+        showToast('File too large — max 50MB');
+        return;
+      }
+      selectedFile = file;
+      fileName.textContent = file.name;
+      fileSize.textContent = formatSize(file.size);
+      fileInfo.hidden = false;
+      convertBtn.disabled = false;
+    }
+
+    function clearFile() {
+      selectedFile = null;
+      fileInput.value = '';
+      fileInfo.hidden = true;
+      convertBtn.disabled = true;
+    }
+
+    function formatSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function startConversion() {
+      if (!selectedFile) return;
+      uploadBox.hidden = true;
+      progressEl.hidden = false;
+      resultDiv.hidden = true;
+      animateSteps();
+
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/convert');
+
+      xhr.upload.onprogress = e => {
+        if (e.lengthComputable) {
+          const pct = Math.round((e.loaded / e.total) * 15);
+          setProgress(pct, 'Uploading PDF...');
+        }
+      };
+
+      xhr.onload = () => {
+        clearInterval(stepTimer);
+        if (xhr.status === 200) {
+          try {
+            showSuccess(JSON.parse(xhr.responseText));
+          } catch {
+            showError('Invalid response from server.');
+          }
+        } else {
+          try {
+            const err = JSON.parse(xhr.responseText);
+            showError(err.error || 'Conversion failed. Please try again.');
+          } catch {
+            showError('Server error — please try again.');
+          }
+        }
+      };
+
+      xhr.onerror = () => { clearInterval(stepTimer); showError('Network error — check your connection.'); };
+      xhr.onabort = () => { clearInterval(stepTimer); };
+      xhr.send(formData);
+    }
+
+    function animateSteps() {
+      currentStep = 0;
+      setProgress(0, STEPS[0].label);
+      activateStep(0);
+
+      stepTimer = setInterval(() => {
+        currentStep++;
+        if (currentStep >= STEPS.length - 1) { clearInterval(stepTimer); return; }
+        const step = STEPS[currentStep];
+        setProgress(step.pct, step.label);
+        activateStep(currentStep);
+      }, 4000);
+    }
+
+    function activateStep(index) {
+      STEPS.forEach((s, i) => {
+        const el = document.getElementById(s.id);
+        if (!el) return;
+        el.classList.remove('active', 'done');
+        if (i < index) el.classList.add('done');
+        else if (i === index) el.classList.add('active');
+      });
+    }
+
+    function setProgress(pct, status) {
+      progressFill.style.width = pct + '%';
+      progressTrack.setAttribute('aria-valuenow', pct);
+      if (status) progressStatus.textContent = status;
+    }
+
+    function showSuccess(data) {
+      setProgress(100, 'Conversion complete!');
+      STEPS.forEach(s => {
+        const el = document.getElementById(s.id);
+        if (el) { el.classList.remove('active'); el.classList.add('done'); }
+      });
+
+      setTimeout(() => {
+        progressEl.hidden = true;
+        resultDiv.hidden = false;
+        resultSuccess.hidden = false;
+        resultError.hidden = true;
+
+        resultTitle.textContent = '\u201c' + (data.title || 'Your textbook') + '\u201d converted!';
+        resultChapters.textContent = '\uD83D\uDCDA ' + (data.chapters || 0) + ' chapters';
+        resultMethod.textContent = data.is_text_based
+          ? '\uD83D\uDCDD Text-based PDF'
+          : '\uD83D\uDD0D Scanned PDF (Gemini OCR)';
+        resultAI.textContent = data.ai_enhanced
+          ? '\uD83E\uDD16 AI enhanced'
+          : '\u26A1 Direct extraction';
+      }, 900);
+    }
+
+    function showError(message) {
+      progressEl.hidden = true;
+      resultDiv.hidden = false;
+      resultSuccess.hidden = true;
+      resultError.hidden = false;
+      errorMsg.textContent = message;
+    }
+
+    function resetToUpload() {
+      clearInterval(stepTimer);
+      if (xhr) { xhr.abort(); xhr = null; }
+      uploadBox.hidden = false;
+      progressEl.hidden = true;
+      resultDiv.hidden = true;
+      resultSuccess.hidden = true;
+      resultError.hidden = true;
+      clearFile();
+      setProgress(0, '');
+      currentStep = 0;
+      STEPS.forEach(s => {
+        const el = document.getElementById(s.id);
+        if (el) el.classList.remove('active', 'done');
+      });
+    }
+
+    function showToast(msg) {
+      const t = document.createElement('div');
+      t.setAttribute('role', 'alert');
+      t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#333;color:white;padding:10px 20px;border-radius:8px;font-size:14px;z-index:9999;';
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 3000);
+    }
+  })();
   </script>
 </body>
 </html>
